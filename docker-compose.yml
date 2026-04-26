@@ -1,0 +1,71 @@
+# infra/docker-compose.dev.yml
+version: "3.9"
+
+services:
+  # ── PostgreSQL for Auth ──
+  auth-db:
+    image: postgres:16-alpine
+    container_name: auth-db-dev
+    environment:
+      POSTGRES_USER: ${AUTH_DB_USER}
+      POSTGRES_PASSWORD: ${AUTH_DB_PASSWORD}
+      POSTGRES_DB: auth_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - auth-db-data:/var/lib/postgresql/data
+      - ./init-db/auth-init.sql:/docker-entrypoint-initdb.d/01-auth.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${AUTH_DB_USER} -d auth_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - inv-system-net
+
+  # ── PostgreSQL for Invite ──
+  invite-db:
+    image: postgres:16-alpine
+    container_name: invite-db-dev
+    environment:
+      POSTGRES_USER: ${INVITE_DB_USER}
+      POSTGRES_PASSWORD: ${INVITE_DB_PASSWORD}
+      POSTGRES_DB: invite_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - invite-db-data:/var/lib/postgresql/data
+      - ./init-db/invite-init.sql:/docker-entrypoint-initdb.d/01-invite.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${INVITE_DB_USER} -d invite_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - inv-system-net
+
+  # ── Redis ──
+  reminder-cache:
+    image: redis:7-alpine
+    container_name: reminder-cache-dev
+    command: redis-server --requirepass ${REDIS_PASSWORD}
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - inv-system-net
+
+volumes:
+  auth-db-data:
+  invite-db-data:
+  redis-data:
+
+networks:
+  inv-system-net:
+    driver: bridge

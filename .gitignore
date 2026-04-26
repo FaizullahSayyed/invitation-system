@@ -1,0 +1,23 @@
+# .gitignore
+node_modules/
+dist/
+.env
+.env.local
+.env.*.local
+*.log
+npm-debug.log*
+.DS_Store
+.dockerignore.bak
+
+# Vault / Secrets
+.env.vault
+secrets/
+*.pem
+*.key
+
+# Docker
+docker-compose.override.yml
+
+# IDE
+.vscode/
+.idea/
